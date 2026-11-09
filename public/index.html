@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Savage Solutions | Tools & AI</title>
+<link rel="stylesheet" href="/styles.css"></head><body><a class="skip" href="#main">Skip to content</a><div class="app">
+<header class="brand"><h1>Savage Solutions</h1><span>Private beta</span><button id="logout" type="button" hidden>Sign out</button></header>
+<section id="loginPanel" class="section"><h2>Welcome to the beta</h2><p>Use your invitation key to access AI chat and send feedback. Calculators and projects work without signing in.</p><form id="loginForm"><label>Invitation key<input id="accessKey" type="password" autocomplete="current-password" required minlength="24" maxlength="256"></label><button class="red" type="submit">SIGN IN</button></form><p id="loginStatus" role="status"></p></section>
+<main id="main" tabindex="-1">
+<div id="home" class="page home active" aria-label="Home"><div id="hero" class="hero">
+<div class="top"><label class="pick" for="pick">BACKGROUND</label><input id="pick" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Change background image"><button id="reset" class="btn" type="button">RESET</button></div>
+<div class="ask"><h2>What can we solve today?</h2><p id="aiStatus" role="status">Sign in to check AI availability.</p><div id="chatLog" role="log" aria-label="Conversation" aria-live="polite"></div><form id="chatForm"><label for="problem">Your question</label><textarea id="problem" required maxlength="4000" placeholder="Describe your job, dimensions, or problem"></textarea><button id="solve" type="submit" class="red" disabled>FIND THE SOLUTION</button></form><button id="newChat" class="btn" type="button">NEW CHAT</button><p id="chatStatus" role="status"></p><small>AI can make mistakes. Verify estimates and use qualified professionals for hazardous work. Chat is sent to the AI provider when enabled; it is not saved by this app.</small></div></div>
+<div class="section"><h2>QUICK ACCESS</h2><div class="grid">
+<button type="button" class="card goto" data-page="tools"><b>TOOLS</b><small>Working calculators</small></button>
+<button type="button" class="card goto" data-page="yard"><b>THE YARD</b><small>Community — coming later</small></button>
+<button type="button" class="card goto" data-page="projects"><b>PROJECTS</b><small>Jobs and builds</small></button>
+<button type="button" class="card goto" data-page="feedback"><b>FEEDBACK</b><small>Send feedback</small></button>
+</div></div></div>
+
+<div id="tools" class="page"><h2>SAVAGE TOOLS</h2><div class="sub">Tap a tool. Its calculator opens directly below.</div><div class="grid">
+<button type="button" class="card tool" data-tool="board"><b>BOARD FEET</b><small>Lumber calculator</small></button>
+<button type="button" class="card tool" data-tool="log"><b>LOG SCALE</b><small>Doyle rule estimate</small></button>
+<button type="button" class="card tool" data-tool="job"><b>JOB ESTIMATOR</b><small>Cost, quote, profit</small></button>
+<button type="button" class="card tool" data-tool="hours"><b>MAN HOURS</b><small>Crew labor calculator</small></button></div>
+
+<div id="board" class="toolbox"><h2>BOARD FEET</h2><div class="row"><label>Thickness inches<input id="bt" type="number" min="0" step="any" value="1.5"></label><label>Width inches<input id="bw" type="number" min="0" step="any" value="6"></label><label>Length feet<input id="bl" type="number" min="0" step="any" value="8"></label><label>Quantity<input id="bq" type="number" min="1" step="1" value="10"></label></div><button id="boardCalc" type="button" class="red">CALCULATE</button><div class="metric">Total<strong id="boardResult">—</strong></div></div>
+
+<div id="log" class="toolbox"><h2>LOG SCALE — DOYLE</h2><p>Small-end diameter inside bark. Rough estimate for logs 5–100 inches; actual recovery varies with kerf, defects, and milling.</p><div class="row"><label>Small-end diameter inches<input id="ld" type="number" min="5" step="any" value="14"></label><label>Length feet<input id="ll" type="number" min="0" step="any" value="8"></label></div><button id="logCalc" type="button" class="red">ESTIMATE YIELD</button><div class="metric">Doyle estimate<strong id="logResult">—</strong></div></div>
+
+<div id="job" class="toolbox"><h2>JOB ESTIMATOR</h2><div class="row"><label>Labor hours<input id="jh" type="number" min="0" step="any" value="20"></label><label>Rate per hour<input id="jr" type="number" min="0" step="any" value="40"></label><label>Materials<input id="jm" type="number" min="0" step="any" value="600"></label><label>Equipment / other<input id="je" type="number" min="0" step="any" value="300"></label><label>Gross margin % (0–95)<input id="mar" type="number" min="0" step="any" max="95" value="25"></label></div><button id="jobCalc" type="button" class="red">BUILD QUOTE</button><div class="metric">Cost / Quote / Profit<strong id="jobResult">—</strong></div><button id="saveEstimate" class="btn" type="button" disabled>SAVE ESTIMATE</button></div>
+
+<div id="hours" class="toolbox"><h2>MAN HOURS</h2><div class="row"><label>Workers<input id="workers" type="number" min="1" step="1" value="3"></label><label>Hours each<input id="eachHours" type="number" min="0" step="any" value="8"></label><label>Hourly rate<input id="hourRate" type="number" min="0" step="any" value="35"></label></div><button id="hoursCalc" type="button" class="red">CALCULATE LABOR</button><div class="metric">Labor<strong id="hoursResult">—</strong></div></div>
+</div>
+
+<div id="yard" class="page"><h2>THE YARD</h2><p>Community posting and a professional directory are planned for a future release. They are not available in this beta.</p><button class="btn goto" data-page="home" type="button">ASK THE AI ASSISTANT</button></div>
+<div id="projects" class="page"><h2>PROJECTS & ESTIMATES</h2><p>Saved in this browser only, including after sign out. Export a backup before clearing browser data or using a shared device.</p><form id="projectForm"><label>Project name<input id="projectName" required maxlength="120"></label><label>Notes<textarea id="projectNotes" maxlength="2000"></textarea></label><button type="submit" class="red">CREATE PROJECT</button></form><p id="projectStatus" role="status"></p><div id="projectList"></div><h2>Saved estimates</h2><p>Build a quote in Tools, then save it here.</p><div id="estimateList"></div><button id="exportData" class="btn" type="button">EXPORT PROJECTS & ESTIMATES</button></div>
+<div id="feedback" class="page feedback"><h2>FEEDBACK</h2><div class="sub">Send feedback to the Savage Solutions team. Do not include sensitive personal information.</div><label>What do you like?<textarea id="like" maxlength="2000"></textarea></label><label>What needs fixing?<textarea id="bad" maxlength="2000"></textarea></label><label>What's missing?<textarea id="missing" maxlength="2000"></textarea></label><button id="saveFeedback" type="button" class="red">SEND FEEDBACK</button><div id="feedbackResult" class="metric" hidden role="status"></div></div>
+
+</main><nav class="nav" aria-label="Main navigation"><button type="button" class="goto" data-page="home">HOME</button><button type="button" class="goto" data-page="tools">TOOLS</button><button type="button" class="goto" data-page="projects">PROJECTS</button><button type="button" class="goto" data-page="yard">YARD</button><button type="button" class="goto" data-page="feedback">FEEDBACK</button></nav>
+</div>
+<script type="module" src="/app.js"></script></body></html>
