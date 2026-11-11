@@ -14,13 +14,13 @@
 <button type="button" class="card goto" data-page="feedback"><b>FEEDBACK</b><small>Send feedback</small></button>
 </div></div></div>
 
-<div id="tools" class="page"><h2>SAVAGE TOOLS</h2><div class="sub">Tap a tool. Its calculator opens directly below.</div><div class="grid">
+<div id="tools" class="page"><h2>SAVAGE TOOLS</h2><div class="sub">Select a trade or search for a calculator. Tap a tool to open it below.</div><div class="row"><label for="tradeSelect">Select Trade<select id="tradeSelect"></select></label><label for="toolSearch">Search calculators<input id="toolSearch" type="search" placeholder="Search all trades"></label></div><p id="tradeSummary" role="status"></p><div id="tradeToolGrid" class="grid">
 <button type="button" class="card tool" data-tool="board"><b>BOARD FEET</b><small>Lumber calculator</small></button>
 <button type="button" class="card tool" data-tool="log"><b>LOG SCALE</b><small>Doyle rule estimate</small></button>
 <button type="button" class="card tool" data-tool="job"><b>JOB ESTIMATOR</b><small>Cost, quote, profit</small></button>
 <button type="button" class="card tool" data-tool="hours"><b>MAN HOURS</b><small>Crew labor calculator</small></button></div>
 
-<div id="board" class="toolbox"><h2>BOARD FEET</h2><div class="row"><label>Thickness inches<input id="bt" type="number" min="0" step="any" value="1.5"></label><label>Width inches<input id="bw" type="number" min="0" step="any" value="6"></label><label>Length feet<input id="bl" type="number" min="0" step="any" value="8"></label><label>Quantity<input id="bq" type="number" min="1" step="1" value="10"></label></div><button id="boardCalc" type="button" class="red">CALCULATE</button><div class="metric">Total<strong id="boardResult">—</strong></div></div>
+<div id="extraToolboxes"></div><div id="board" class="toolbox"><h2>BOARD FEET</h2><div class="row"><label>Thickness inches<input id="bt" type="number" min="0" step="any" value="1.5"></label><label>Width inches<input id="bw" type="number" min="0" step="any" value="6"></label><label>Length feet<input id="bl" type="number" min="0" step="any" value="8"></label><label>Quantity<input id="bq" type="number" min="1" step="1" value="10"></label></div><button id="boardCalc" type="button" class="red">CALCULATE</button><div class="metric">Total<strong id="boardResult">—</strong></div></div>
 
 <div id="log" class="toolbox"><h2>LOG SCALE — DOYLE</h2><p>Small-end diameter inside bark. Rough estimate for logs 5–100 inches; actual recovery varies with kerf, defects, and milling.</p><div class="row"><label>Small-end diameter inches<input id="ld" type="number" min="5" step="any" value="14"></label><label>Length feet<input id="ll" type="number" min="0" step="any" value="8"></label></div><button id="logCalc" type="button" class="red">ESTIMATE YIELD</button><div class="metric">Doyle estimate<strong id="logResult">—</strong></div></div>
 
