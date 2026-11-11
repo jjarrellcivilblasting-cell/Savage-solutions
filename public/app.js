@@ -1,4 +1,5 @@
 import {boardFeet, logScale, jobQuote, labor} from '/calculators.js';
+import {trades, calculators, extraCalculators} from '/trade-catalog.js';
 const $=id=>document.getElementById(id);
 const text=(id,value)=>{$(id).textContent=value;};
 let aiEnabled=false, signedIn=false, busy=false, messages=[], latestQuote=null, backgroundUrl=null;
@@ -26,10 +27,50 @@ function showPage(){
 }
 document.querySelectorAll('.goto').forEach(button=>button.onclick=()=>{if(location.hash===`#${button.dataset.page}`)showPage();else location.hash=button.dataset.page;});
 window.addEventListener('hashchange',showPage);showPage();
-document.querySelectorAll('.tool').forEach(button=>button.onclick=()=>{
-  document.querySelectorAll('.toolbox').forEach(box=>box.classList.toggle('active',box.id===button.dataset.tool));
-  const box=$(button.dataset.tool);box.querySelector('input').focus({preventScroll:true});box.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-});
+const tradeSelect=$('tradeSelect'), toolSearch=$('toolSearch'), tradeGrid=$('tradeToolGrid');
+for(const trade of trades){const option=document.createElement('option');option.value=trade.id;option.textContent=trade.name;tradeSelect.append(option);}
+const originalButtons=new Map([...tradeGrid.querySelectorAll('.tool')].map(button=>[button.dataset.tool,button]));
+for(const tool of extraCalculators){
+  const definition=calculators.find(item=>item.id===tool.id);
+  const button=document.createElement('button');button.type='button';button.className='card tool';button.dataset.tool=tool.id;
+  const title=document.createElement('b');title.textContent=definition.name;
+  const subtitle=document.createElement('small');subtitle.textContent=definition.description;
+  button.append(title,subtitle);originalButtons.set(tool.id,button);
+  const panel=document.createElement('div');panel.id=tool.id;panel.className='toolbox';
+  const heading=document.createElement('h2');heading.textContent=definition.name;panel.append(heading);
+  const fields=document.createElement('div');fields.className='row';
+  const inputs=tool.inputs.map(([label,unit,initial],index)=>{
+    const wrapper=document.createElement('label');wrapper.textContent=label+' ('+unit+')';
+    const input=document.createElement('input');input.type='number';input.min='0';input.max='10000000';input.step='any';input.value=initial;input.id=tool.id+'-input-'+index;
+    wrapper.append(input);fields.append(wrapper);return input;
+  });panel.append(fields);
+  const action=document.createElement('button');action.type='button';action.className='red';action.textContent='CALCULATE';panel.append(action);
+  const output=document.createElement('div');output.className='metric';output.setAttribute('role','status');output.setAttribute('aria-live','polite');output.textContent='Result: ';
+  const value=document.createElement('strong');value.textContent='—';output.append(value);panel.append(output);
+  const note=document.createElement('p');note.textContent=tool.detail;panel.append(note);
+  action.onclick=()=>{
+    try{
+      const numbers=inputs.map(input=>{if(input.value.trim()==='')throw Error('Enter all dimensions.');const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>10000000)throw Error('Use nonnegative dimensions up to 10,000,000.');return n;});
+      if((tool.id==='slope'&&numbers[1]===0)||(tool.id==='tank'&&numbers.some(n=>n===0)))throw Error('Run and cylinder dimensions must be greater than zero.');
+      const result=tool.compute(numbers);if(!Number.isFinite(result))throw Error('Invalid result.');
+      value.textContent=result.toLocaleString('en-US',{maximumFractionDigits:3})+' '+tool.unit;
+    }catch(error){value.textContent=error.message;}
+  };
+  $('extraToolboxes').append(panel);
+}
+function openTool(id){
+  document.querySelectorAll('.toolbox').forEach(box=>box.classList.toggle('active',box.id===id));
+  const box=$(id);if(!box)return;box.querySelector('input')?.focus({preventScroll:true});
+  box.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+}
+function renderTradeTools(){
+  const trade=tradeSelect.value,query=toolSearch.value.trim().toLowerCase();
+  const matching=calculators.filter(tool=>(trade==='all'||tool.trades.includes(trade))&&(!query||[tool.name,tool.description,...tool.trades.map(id=>trades.find(t=>t.id===id)?.name||'')].join(' ').toLowerCase().includes(query)));
+  tradeGrid.replaceChildren(...matching.map(tool=>originalButtons.get(tool.id)));
+  $('tradeSummary').textContent=matching.length+' calculator'+(matching.length===1?'':'s')+' available'+(trade==='all'?' across all trades':' for '+trades.find(t=>t.id===trade).name)+'. More tools will be added.';
+  for(const button of tradeGrid.querySelectorAll('.tool'))button.onclick=()=>openTool(button.dataset.tool);
+}
+tradeSelect.addEventListener('change',renderTradeTools);toolSearch.addEventListener('input',renderTradeTools);renderTradeTools();
 function calculate(button,result,fn){$(result).setAttribute('role','status');$(result).setAttribute('aria-live','polite');$(button).onclick=()=>{try{status(result,fn());}catch(error){status(result,error.message,true);}};}
 const values=(...ids)=>ids.map(id=>$(id).value);
 calculate('boardCalc','boardResult',()=>`${boardFeet(...values('bt','bw','bl','bq')).toFixed(1)} bd ft`);
