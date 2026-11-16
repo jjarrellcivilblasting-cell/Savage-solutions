@@ -31,7 +31,8 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
   const fixedFiles = new Map([
     ['/', ['public/index.html','text/html; charset=utf-8']], ['/index.html',['public/index.html','text/html; charset=utf-8']],
     ['/app.js',['public/app.js','text/javascript; charset=utf-8']], ['/styles.css',['public/styles.css','text/css; charset=utf-8']],
-    ['/calculators.js',['calculators.js','text/javascript; charset=utf-8']], ['/assets/hero.webp',['public/assets/hero.webp','image/webp']]
+    ['/calculators.js',['calculators.js','text/javascript; charset=utf-8']],
+    ['/trade-engine.js',['trade-engine.js','text/javascript; charset=utf-8']], ['/trades.js',['public/trades.js','text/javascript; charset=utf-8']], ['/assets/hero.webp',['public/assets/hero.webp','image/webp']]
   ]);
   function rate(key, limit, interval) {
     const time = now();
