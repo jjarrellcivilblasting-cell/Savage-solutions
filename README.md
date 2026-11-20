@@ -1,6 +1,6 @@
 # Savage Solutions MVP
 
-Private beta built from the original single-file app. Node 24+ with a persistent writable disk is required. **No deployment has been performed. Paid AI calls are off by default.**
+Private beta built from the original single-file app. Node 24+ with a persistent writable disk is required. **A private beta is deployed on Render; the new Find Work and trade upgrade is not yet merged or deployed. Paid AI calls are off by default.**
 
 ## Run locally
 
@@ -49,7 +49,16 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 
 Backend tests inject a fake fetch implementation; browser tests start a local backend with the same mock and block all browser requests outside localhost. Tests never use a real API key or the live provider. Browser checks run at 1280×900 and 390×844, saving screenshots to ignored `test-results/`. See `TEST_RESULTS.md` for the implementation run.
 
-## Release gate for November 16, 2026
+## Find Work and job postings (feature branch, not yet public)
+- "Find Work" contains trade filters and links to the North Carolina eVP, NCDOT lettings, federal SAM.gov opportunities and provider-described free freight load boards. These links do **not** constitute a licensed syndicated real-time feed.
+- Customers can create local, copyable posting drafts without enabling server-side data collection; drafts do not publish and are not synced.
+- When marketplace is enabled, logged-in beta testers can submit jobs for moderation, bid interest on approved jobs, and report listings. The server does not expose customer email addresses publicly, and submissions are never auto-approved.
+- Marketplace remains **off by default**. Both `MARKETPLACE_ENABLED=true` and `MARKETPLACE_PERSISTENT_STORAGE_CONFIRMED=true` are required. Do not set either on an ephemeral disk; add durable storage, backups, moderation and privacy workflows first.
+- Private operator moderation script: `node scripts/review-marketplace.js pending`; `node scripts/review-marketplace.js review <id>`; `approve <id>`, `reject <id>`, `hide <id>`, `reports`, `bids <jobId>`, and `delete-job <id>`. Do not put contact exports into public logs.
+- Current sign-in is a **shared beta invitation**, not per-customer accounts. Do not invite the general public or enable payments. Before public launch add individual identity, ownership, messaging, account deletion and abuse response tools.
+- See [APP_STORE_READINESS.md](APP_STORE_READINESS.md) for native iOS and App Store steps.
+
+## Release gate for November 20, 2026
 
 This branch is prepared for an invite-only beta, not an unrestricted community launch. Before deploying, obtain deployment approval, choose the host/domain and persistent disk, configure an HTTPS reverse proxy, set `NODE_ENV=production` and an exact HTTPS `APP_ORIGIN`, inject secrets through host settings, and verify the deployed root/API/cookie behavior. GitHub Pages alone cannot run this backend. Serve through the Node server so the allowlisted static routes and security headers apply; never expose the repository or data directory as a static root.
 
