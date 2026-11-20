@@ -68,10 +68,63 @@ const {tmpdir}=require('node:os');const {join}=require('node:path');
       assert.equal(await page.evaluate(()=>window.injected),undefined);
       const inputs=await page.locator('input,textarea,select').evaluateAll(nodes=>nodes.filter(n=>!n.labels?.length && !n.getAttribute('aria-label')).map(n=>n.id));assert.deepEqual(inputs,[]);
       assert.equal(await page.locator('html').getAttribute('lang'),'en');assert.deepEqual(errors,[]);assert.deepEqual(blocked,[]);
+
+      // Bilingual display, translated search, saved language choice and unmodified customer text.
+      await page.selectOption('#languageSelect','es');
+      await page.waitForFunction(()=>document.documentElement.lang==='es');
+      assert.match(await page.textContent('#home .ask h2'),/¿Qué podemos resolver hoy/);
+      assert.match(await page.textContent('.nav [data-page="work"]'),/TRABAJO/);
+      await page.click('.nav [data-page="work"]');
+      assert.match(await page.textContent('#work h2'),/LICITACIONES/);
+      assert.match(await page.textContent('#marketMode'),/todavía no está activa/);
+      await page.fill('#postTitle','Patio de adoquines de 400 pies cuadrados');
+      await page.selectOption('#postTrade','hardscaping');
+      await page.fill('#postCity','Louisburg, NC');
+      await page.fill('#postScope','Instalar adoquines y grava en un patio con base compactada.');
+      await page.click('#saveWorkDraft');
+      await page.waitForFunction(()=>document.querySelector('#workStatus').textContent.includes('NO se ha publicado'));
+      assert.match(await page.textContent('#workDrafts'),/Patio de adoquines de 400 pies cuadrados/);
+      await page.click('.nav [data-page="tools"]');
+      await page.selectOption('#tradeSelect','concrete');
+      await page.fill('#toolSearch','concreto');
+      await page.waitForFunction(()=>document.querySelector('#tradeSummary').textContent.includes('calculadoras disponibles'));
+      assert.ok(await page.locator('#tradeToolGrid .tool').count()>0);
+      await page.selectOption('#tradeSelect','hardscaping');await page.fill('#toolSearch','');
+      await page.click('[data-tool="pavers"]');await page.click('#pavers button.red');
+      await page.waitForFunction(()=>document.querySelector('#pavers .metric').textContent.includes('Resultado'));
+      assert.match(await page.textContent('#pavers .metric'),/330 ft² por pedir/);
+
+      await page.selectOption('#tradeSelect','all');
+      await page.click('[data-tool="board"]');await page.fill('#bt','-1');
+      await page.click('#boardCalc');
+      await page.waitForFunction(()=>document.querySelector('#boardResult').textContent.includes('Espesor debe ser'));
+
+      await page.reload();
+      await page.waitForFunction(()=>document.documentElement.lang==='es'&&document.querySelector('#languageSelect').value==='es');
+      assert.match(await page.textContent('.nav [data-page="work"]'),/TRABAJO/);
+      await page.selectOption('#languageSelect','en');
+      await page.waitForFunction(()=>document.documentElement.lang==='en');
+      assert.match(await page.textContent('.nav [data-page="work"]'),/WORK/);
+      assert.equal(await page.getAttribute('#toolSearch','placeholder'),'Search all trades');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       await page.screenshot({path:`test-results/home-${viewport.width}.png`,fullPage:true});
       await page.click('#logout');await page.waitForSelector('#loginPanel',{state:'visible'});assert.equal(await page.isDisabled('#solve'),true);
       await context.close();console.log(`PASS ${viewport.width}px: chat, context, failures, calculators, persistence, export, deletion, feedback, routing, uploads, injection, labels and logout`);
     }
+
+    const spanish=await browser.newContext({locale:'es-MX',viewport:{width:390,height:844}});
+    const spanishPage=await spanish.newPage();const spanishErrors=[];
+    spanishPage.on('pageerror',error=>spanishErrors.push(error.message));
+    await spanish.route('**/*',route=>route.request().url().startsWith(origin)?route.continue():route.abort());
+    await spanishPage.goto(origin);
+    await spanishPage.waitForFunction(()=>document.documentElement.lang==='es');
+    assert.equal(await spanishPage.inputValue('#languageSelect'),'es');
+    assert.match(await spanishPage.textContent('#home .ask h2'),/¿Qué podemos resolver hoy/);
+    assert.match(await spanishPage.textContent('.nav [data-page="work"]'),/TRABAJO/);
+    assert.equal(await spanishPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    assert.deepEqual(spanishErrors,[]);
+    await spanish.close();
+    console.log('PASS Spanish phone locale automatically selects Español on first visit');
     const corrupt=await browser.newContext();await corrupt.addInitScript(()=>localStorage.setItem('savage-solutions-v1',JSON.stringify({projects:[null],estimates:[]})));
     const badPage=await corrupt.newPage();const badErrors=[];badPage.on('pageerror',e=>badErrors.push(e.message));await badPage.goto(origin+'/#projects');
     await badPage.waitForFunction(()=>document.querySelector('#projectStatus').textContent.includes('could not be read'));await badPage.fill('#projectName','Do not overwrite');await badPage.click('#projectForm button');assert.match(await badPage.textContent('#projectStatus'),/Existing data could not be read/);assert.equal(await badPage.evaluate(()=>JSON.parse(localStorage.getItem('savage-solutions-v1')).projects[0]),null);assert.deepEqual(badErrors,[]);await corrupt.close();

@@ -39,12 +39,24 @@ export function normalizeJobDraft(draft) {
   if(clean.deadline && !/^\d{4}-\d{2}-\d{2}$/.test(clean.deadline)) throw Error('Choose a valid deadline date.');
   return clean;
 }
-export function formatJobDraft(draft) {
+export function formatJobDraft(draft,language='en') {
   const job=normalizeJobDraft(draft);
   const trade=workTrades.find(item=>item.id===job.trade).name;
-  return [job.title, 'Trade: '+trade, 'Location: '+job.city,
-    job.budget?'Budget: '+job.budget:null,
-    job.deadline?'Bid deadline: '+job.deadline:null,
-    '',job.scope,'','Prepared with Savage Solutions — draft, not a published listing.']
+  const spanish=language==='es';
+  const names={
+    general:'Contratación general',concrete:'Concreto',excavation:'Excavación y nivelación',
+    landscaping:'Jardinería y paisajismo',hardscaping:'Obras exteriores y adoquines',
+    carpentry:'Carpintería y estructuras',roofing:'Techado',masonry:'Albañilería',
+    electrical:'Electricidad',plumbing:'Plomería',hvac:'Climatización',
+    welding:'Soldadura y fabricación',heavy:'Maquinaria pesada',forestry:'Silvicultura y desmonte',
+    mining:'Perforación y voladuras',freight:'Cargas y transporte',other:'Otros'
+  };
+  return [job.title,
+    (spanish?'Oficio: ':'Trade: ')+(spanish?(names[job.trade]||trade):trade),
+    (spanish?'Ubicación: ':'Location: ')+job.city,
+    job.budget?(spanish?'Presupuesto: ':'Budget: ')+job.budget:null,
+    job.deadline?(spanish?'Fecha límite para ofertar: ':'Bid deadline: ')+job.deadline:null,
+    '',job.scope,'',spanish?'Preparado con Savage Solutions — borrador, no es un anuncio publicado.':
+    'Prepared with Savage Solutions — draft, not a published listing.']
     .filter(line=>line!==null).join('\n');
 }

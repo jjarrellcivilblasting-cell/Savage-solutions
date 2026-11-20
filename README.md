@@ -49,6 +49,13 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 
 Backend tests inject a fake fetch implementation; browser tests start a local backend with the same mock and block all browser requests outside localhost. Tests never use a real API key or the live provider. Browser checks run at 1280×900 and 390×844, saving screenshots to ignored `test-results/`. See `TEST_RESULTS.md` for the implementation run.
 
+## English / Español language options
+- The top bar has a persistent **English / Español** selector. The first visit defaults to Spanish when the browser/device language begins with `es`, otherwise English. A manual selection is saved in this browser for future visits.
+- The navigation, trade categories and searches, common calculator labels, job-posting form, bid-source descriptions, error messages and private posting draft export are available in both languages.
+- The `html lang` attribute, accessible labels, mobile layout and page title follow the selected language.
+- Customer-generated project descriptions, AI replies, and independent third-party bid boards are **not** automatically translated. The app does not change submitted text or translate source-site content.
+- Spanish is a user-interface convenience and does not certify estimates, legal compliance, licensing or freight details.
+
 ## Find Work and job postings (feature branch, not yet public)
 - "Find Work" contains trade filters and links to the North Carolina eVP, NCDOT lettings, federal SAM.gov opportunities and provider-described free freight load boards. These links do **not** constitute a licensed syndicated real-time feed.
 - Customers can create local, copyable posting drafts without enabling server-side data collection; drafts do not publish and are not synced.

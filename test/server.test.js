@@ -87,7 +87,7 @@ test('parallel AI requests respect the concurrency cap',async t=>{
 
 test('static market modules and catalog are served; marketplace defaults off',async t=>{
   const f=await fixture(t);
-  for(const asset of ['/trade-catalog.js','/work-data.js','/work-marketplace.js']){
+  for(const asset of ['/trade-catalog.js','/work-data.js','/work-marketplace.js','/i18n.js']){
     const res=await f.request(asset);assert.equal(res.status,200,asset);
     assert.match(res.headers.get('content-type'),/javascript/);
   }

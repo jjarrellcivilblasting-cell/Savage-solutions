@@ -30,3 +30,16 @@ h2{margin:0 0 6px;color:#dfc098}.sub{color:#aa967d;margin-bottom:12px}.grid{disp
 .market-bid label{margin-bottom:10px}
 #marketMode{border-left:3px solid #ba8d4e;padding-left:10px}
 @media(max-width:520px){#workForm .row{grid-template-columns:1fr}#work .row:first-of-type{grid-template-columns:1fr}}
+
+
+/* Bilingual navigation: readable control and longer Spanish labels on phones. */
+.language-choice{flex:0 1 152px;min-width:122px;margin:0;font-size:12px;color:#dfc098}
+.language-choice select{min-height:44px;margin:4px 0 0;font-size:16px;width:100%;background:#eee5d8;color:#17120e}
+.nav button{min-width:0;overflow-wrap:anywhere;white-space:normal;line-height:1.22}
+@media(max-width:520px){
+  .brand{gap:8px}
+  .brand h1{flex:1 1 170px}
+  .brand span{flex:0 1 80px}
+  .language-choice{flex:1 1 130px}
+  .nav button{font-size:clamp(9px,2.5vw,12px);padding:9px 1px}
+}
