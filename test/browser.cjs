@@ -111,6 +111,20 @@ const {tmpdir}=require('node:os');const {join}=require('node:path');
       await page.click('#logout');await page.waitForSelector('#loginPanel',{state:'visible'});assert.equal(await page.isDisabled('#solve'),true);
       await context.close();console.log(`PASS ${viewport.width}px: chat, context, failures, calculators, persistence, export, deletion, feedback, routing, uploads, injection, labels and logout`);
     }
+
+    const spanish=await browser.newContext({locale:'es-MX',viewport:{width:390,height:844}});
+    const spanishPage=await spanish.newPage();const spanishErrors=[];
+    spanishPage.on('pageerror',error=>spanishErrors.push(error.message));
+    await spanish.route('**/*',route=>route.request().url().startsWith(origin)?route.continue():route.abort());
+    await spanishPage.goto(origin);
+    await spanishPage.waitForFunction(()=>document.documentElement.lang==='es');
+    assert.equal(await spanishPage.inputValue('#languageSelect'),'es');
+    assert.match(await spanishPage.textContent('#home .ask h2'),/¿Qué podemos resolver hoy/);
+    assert.match(await spanishPage.textContent('.nav [data-page="work"]'),/TRABAJO/);
+    assert.equal(await spanishPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    assert.deepEqual(spanishErrors,[]);
+    await spanish.close();
+    console.log('PASS Spanish phone locale automatically selects Español on first visit');
     const corrupt=await browser.newContext();await corrupt.addInitScript(()=>localStorage.setItem('savage-solutions-v1',JSON.stringify({projects:[null],estimates:[]})));
     const badPage=await corrupt.newPage();const badErrors=[];badPage.on('pageerror',e=>badErrors.push(e.message));await badPage.goto(origin+'/#projects');
     await badPage.waitForFunction(()=>document.querySelector('#projectStatus').textContent.includes('could not be read'));await badPage.fill('#projectName','Do not overwrite');await badPage.click('#projectForm button');assert.match(await badPage.textContent('#projectStatus'),/Existing data could not be read/);assert.equal(await badPage.evaluate(()=>JSON.parse(localStorage.getItem('savage-solutions-v1')).projects[0]),null);assert.deepEqual(badErrors,[]);await corrupt.close();
