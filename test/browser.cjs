@@ -58,6 +58,7 @@ const {tmpdir}=require('node:os');const {join}=require('node:path');
       assert.match(await page.textContent('#pavers .metric'),/330 ft² to order/);
       await page.click('[data-tool="mulch"]');await page.click('#mulch button.red');
       assert.match(await page.textContent('#mulch .metric'),/2.222 yd³/);
+      await page.click('.nav [data-page="projects"]');
       await page.click('.nav [data-page="feedback"]');await page.fill('#like','<img src=x onerror="window.injected=true">');await page.click('#saveFeedback');await page.waitForFunction(()=>document.querySelector('#feedbackResult').textContent.includes('received'));assert.equal(await page.locator('#feedbackResult img').count(),0);
       await page.goBack();await page.waitForURL('**/#projects');assert.equal(await page.locator('.nav [aria-current="page"]').textContent(),'PROJECTS');
       await page.click('.nav [data-page="home"]');await page.setInputFiles('#pick',{name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});assert.match(await page.textContent('#chatStatus'),/Choose a JPEG/);
