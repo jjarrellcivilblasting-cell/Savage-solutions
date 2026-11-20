@@ -1,0 +1,24 @@
+name: Savage Solutions checks
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/find-work-marketplace-appstore
+      - feature/select-trade-calculators
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
