@@ -14,6 +14,9 @@ test('work draft validation, privacy and shareable text',()=>{
   assert.equal(item.city,'Louisburg, NC');
   assert.equal(formatJobDraft(item).includes('not a published listing'),true);
   assert.equal(formatJobDraft({...item,email:'secret@example.test'}).includes('secret@example.test'),false);
+  assert.match(formatJobDraft(item,'es'),/Oficio: Obras exteriores y adoquines/);
+  assert.match(formatJobDraft(item,'es'),/borrador, no es un anuncio publicado/);
+  assert.equal(formatJobDraft(item,'es').includes('secret@example.test'),false);
   assert.throws(()=>normalizeJobDraft({...draft,trade:'invalid'}),/Select a trade/);
   assert.throws(()=>normalizeJobDraft({...draft,scope:'short'}),/Describe/);
   assert.throws(()=>normalizeJobDraft({...draft,title:'A'.repeat(121)}),/title/);
