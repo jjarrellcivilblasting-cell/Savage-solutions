@@ -344,9 +344,9 @@ const originalText = new WeakMap();
 const originalAttrs = new WeakMap();
 const supportedAttrs = ['placeholder','aria-label','title'];
 const replacements = [
-  [/^(.+) is required\\.$/, m => localize(m[1]) + ' es obligatorio.'],
-  [/^(.+) must be (a whole number|a number) (greater than zero|from ([0-9.]+)) and at most ([0-9.]+)\\.$/, m => localize(m[1]) + ' debe ser ' + (m[2]==='a whole number'?'un número entero':'un número') + (m[3]==='greater than zero'?' mayor que cero':' desde '+m[4]) + ' y como máximo ' + m[5] + '.'],
-  [/^([0-9,.]+) bd ft( \\(Doyle estimate\\))?$/, m => m[1] + ' pies tablares' + (m[2]?' (estimación Doyle)':'')],
+  [/^(.+) is required\.$/, m => localize(m[1]) + ' es obligatorio.'],
+  [/^(.+) must be (a whole number|a number) (greater than zero|from ([0-9.]+)) and at most ([0-9.]+)\.$/, m => localize(m[1]) + ' debe ser ' + (m[2]==='a whole number'?'un número entero':'un número') + (m[3]==='greater than zero'?' mayor que cero':' desde '+m[4]) + ' y como máximo ' + m[5] + '.'],
+  [/^([0-9,.]+) bd ft( \(Doyle estimate\))?$/, m => m[1] + ' pies tablares' + (m[2]?' (estimación Doyle)':'')],
   [/^([0-9,.]+) (yd³|ft²|ft² to order|% grade|US gallons|short tons|meters)$/, m => m[1] + ' ' + localize(m[2])],
 
   [/^(\d+) calculators? available across all trades\. More tools will be added\.$/, m => m[1] + ' calculadoras disponibles para todos los oficios. Se añadirán más herramientas.'],
