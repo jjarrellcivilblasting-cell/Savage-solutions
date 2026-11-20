@@ -20,7 +20,7 @@ $('loginForm').onsubmit=async event=>{
 };
 $('logout').onclick=async()=>{try{await api('/api/logout',{});signedIn=false;aiEnabled=false;messages=[];$('chatLog').replaceChildren();authUI();status('loginStatus','Signed out.');}catch(error){status('chatStatus',error.message,true);}};
 function showPage(){
-  const requested=location.hash.slice(1) || 'home';const name=['home','tools','yard','projects','feedback'].includes(requested)?requested:'home';
+  const requested=location.hash.slice(1) || 'home';const name=['home','tools','work','yard','projects','feedback'].includes(requested)?requested:'home';
   document.querySelectorAll('.page').forEach(page=>page.classList.toggle('active',page.id===name));
   document.querySelectorAll('.nav button').forEach(button=>{if(button.dataset.page===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
   $('main').focus({preventScroll:true});window.scrollTo(0,0);
@@ -52,6 +52,8 @@ for(const tool of extraCalculators){
     try{
       const numbers=inputs.map(input=>{if(input.value.trim()==='')throw Error('Enter all dimensions.');const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>10000000)throw Error('Use nonnegative dimensions up to 10,000,000.');return n;});
       if((tool.id==='slope'&&numbers[1]===0)||(tool.id==='tank'&&numbers.some(n=>n===0)))throw Error('Run and cylinder dimensions must be greater than zero.');
+      if(tool.id==='pavers'&&numbers[2]>100)throw Error('Use a waste allowance of 0–100%.');
+      if(tool.id==='aggregate'&&(numbers[3]===0||numbers[3]>4))throw Error('Enter a realistic bulk density greater than 0 and up to 4 tons per cubic yard.');
       const result=tool.compute(numbers);if(!Number.isFinite(result))throw Error('Invalid result.');
       value.textContent=result.toLocaleString('en-US',{maximumFractionDigits:3})+' '+tool.unit;
     }catch(error){value.textContent=error.message;}
