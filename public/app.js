@@ -1,4 +1,5 @@
 import {boardFeet, logScale, jobQuote, labor} from '/calculators.js';
+import {localize,onLanguageChange} from '/i18n.js';
 import {trades, calculators, extraCalculators} from '/trade-catalog.js';
 const $=id=>document.getElementById(id);
 const text=(id,value)=>{$(id).textContent=value;};
@@ -67,7 +68,7 @@ function openTool(id){
 }
 function renderTradeTools(){
   const trade=tradeSelect.value,query=toolSearch.value.trim().toLowerCase();
-  const matching=calculators.filter(tool=>(trade==='all'||tool.trades.includes(trade))&&(!query||[tool.name,tool.description,...tool.trades.map(id=>trades.find(t=>t.id===id)?.name||'')].join(' ').toLowerCase().includes(query)));
+  const matching=calculators.filter(tool=>(trade==='all'||tool.trades.includes(trade))&&(!query||[tool.name,localize(tool.name),tool.description,localize(tool.description),...tool.trades.flatMap(id=>{const name=trades.find(t=>t.id===id)?.name||'';return [name,localize(name)];})].join(' ').toLowerCase().includes(query)));
   tradeGrid.replaceChildren(...matching.map(tool=>originalButtons.get(tool.id)));
   $('tradeSummary').textContent=matching.length+' calculator'+(matching.length===1?'':'s')+' available'+(trade==='all'?' across all trades':' for '+trades.find(t=>t.id===trade).name)+'. More tools will be added.';
   for(const button of tradeGrid.querySelectorAll('.tool'))button.onclick=()=>openTool(button.dataset.tool);
@@ -80,7 +81,7 @@ calculate('logCalc','logResult',()=>`${logScale(...values('ld','ll')).toFixed(1)
 calculate('jobCalc','jobResult',()=>{latestQuote=null;$('saveEstimate').disabled=true;const result=jobQuote(...values('jh','jr','jm','je','mar'));latestQuote={...result,inputs:Object.fromEntries(['jh','jr','jm','je','mar'].map(id=>[id,$(id).value]))};$('saveEstimate').disabled=false;return `${money(result.cost)} cost / ${money(result.quote)} quote / ${money(result.profit)} profit`;});
 ['jh','jr','jm','je','mar'].forEach(id=>$(id).addEventListener('input',()=>{latestQuote=null;$('saveEstimate').disabled=true;text('jobResult','Inputs changed. Build the quote again.');}));
 calculate('hoursCalc','hoursResult',()=>{const result=labor(...values('workers','eachHours','hourRate'));return `${result.hours.toFixed(1)} man-hours / ${money(result.cost)}`;});
-function message(role,content){const node=document.createElement('div');node.className=`message ${role}`;node.textContent=`${role==='user'?'You':'Savage AI'}: ${content}`;$('chatLog').append(node);$('chatLog').scrollTop=$('chatLog').scrollHeight;}
+function message(role,content){const node=document.createElement('div');node.className=`message ${role}`;const label=document.createElement('strong');label.textContent=role==='user'?'You: ':'Savage AI: ';const body=document.createElement('span');body.dataset.noTranslate='';body.textContent=content;node.append(label,body);$('chatLog').append(node);$('chatLog').scrollTop=$('chatLog').scrollHeight;}
 $('chatForm').onsubmit=async event=>{
   event.preventDefault();if(busy || !aiEnabled || !signedIn)return;
   const content=$('problem').value.trim();if(!content){status('chatStatus','Enter your question first.',true);return;}
@@ -118,8 +119,8 @@ try{const saved=JSON.parse(localStorage.getItem(storageKey) || 'null');if(saved)
 catch{storageReady=false;status('projectStatus','Saved browser data could not be read. Export your data for recovery before clearing this site’s storage. New saves are blocked to protect existing data.',true);}
 function persist(next){if(!storageReady){status('projectStatus','Existing data could not be read. Export it for recovery before clearing site storage.',true);return false;}try{localStorage.setItem(storageKey,JSON.stringify(next));records=next;renderRecords();return true;}catch{status('projectStatus','Browser storage is unavailable or full. Your changes were not saved.',true);return false;}}
 function recordCard(item,type){
-  const card=document.createElement('article');card.className='record';const title=document.createElement('h3');title.textContent=item.name || 'Untitled';card.append(title);
-  const details=document.createElement('p');details.textContent=type==='projects'?`${item.notes || ''}\nStatus: ${item.done?'Complete':'In progress'}`:`${money(item.cost)} cost / ${money(item.quote)} quote / ${money(item.profit)} profit\nSaved ${new Date(item.createdAt).toLocaleDateString()}`;card.append(details);
+  const card=document.createElement('article');card.className='record';const title=document.createElement('h3');title.dataset.noTranslate='';title.textContent=item.name || 'Untitled';card.append(title);
+  const details=document.createElement('p');if(type==='projects'){const notes=document.createElement('span');notes.dataset.noTranslate='';notes.textContent=item.notes||'';const state=document.createElement('span');state.textContent='\n'+localize('Status: '+(item.done?'Complete':'In progress'));details.append(notes,state);}else{details.textContent=`${money(item.cost)} cost / ${money(item.quote)} quote / ${money(item.profit)} profit\nSaved ${new Date(item.createdAt).toLocaleDateString()}`;}card.append(details);
   if(type==='projects'){
     const edit=document.createElement('button');edit.className='btn';edit.textContent='EDIT';edit.setAttribute('aria-label',`Edit ${item.name}`);edit.onclick=()=>{const name=prompt('Project name:',item.name);if(!name?.trim())return;const notes=prompt('Project notes:',item.notes);if(notes===null)return;persist({...records,projects:records.projects.map(p=>p.id===item.id?{...p,name:name.trim().slice(0,120),notes:notes.slice(0,2000)}:p)});};card.append(edit);
     const toggle=document.createElement('button');toggle.className='btn';toggle.textContent=item.done?'REOPEN':'MARK COMPLETE';toggle.onclick=()=>persist({...records,projects:records.projects.map(p=>p.id===item.id?{...p,done:!p.done}:p)});card.append(toggle);
@@ -131,4 +132,5 @@ $('projectForm').onsubmit=event=>{event.preventDefault();const name=$('projectNa
 $('saveEstimate').onclick=()=>{if(!latestQuote)return;if(records.estimates.length>=200){location.hash='projects';return status('projectStatus','Export and remove older estimates before adding more.',true);}const name=prompt('Name this estimate:','Job estimate');if(!name?.trim())return;if(persist({...records,estimates:[...records.estimates,{id:crypto.randomUUID(),name:name.trim().slice(0,120),...latestQuote,createdAt:new Date().toISOString()}]})){location.hash='projects';status('projectStatus','Estimate saved in this browser.');}else location.hash='projects';};
 $('exportData').onclick=()=>{let content;try{content=storageReady?JSON.stringify(records,null,2):localStorage.getItem(storageKey);if(!content)throw Error();}catch{return status('projectStatus','Browser storage cannot be accessed for export.',true);}const url=URL.createObjectURL(new Blob([content],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='savage-solutions-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 window.addEventListener('storage',event=>{if(event.key!==storageKey)return;try{records=event.newValue?validateRecords(JSON.parse(event.newValue)):{projects:[],estimates:[]};storageReady=true;renderRecords();status('projectStatus','Saved records updated in another tab.');}catch{storageReady=false;status('projectStatus','Another tab wrote unreadable data. Saves are blocked; export a recovery copy.',true);}});
+onLanguageChange(()=>{renderTradeTools();renderRecords();for(const node of $('chatLog').querySelectorAll('.message strong'))node.textContent=node.parentElement.classList.contains('user')?'You: ':'Savage AI: ';});
 renderRecords();session();
