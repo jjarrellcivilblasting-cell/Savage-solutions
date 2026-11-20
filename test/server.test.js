@@ -84,3 +84,44 @@ test('parallel AI requests respect the concurrency cap',async t=>{
   for(let i=0;i<100 && pending.length<2;i++)await new Promise(resolve=>setTimeout(resolve,5));
   try{assert.equal(pending.length,2);assert.equal((await f.request('/api/chat',payload)).status,429);}finally{pending.forEach(resolve=>resolve(Response.json({choices:[{message:{content:'ok'}}]})));await Promise.all([first,second]);}
 });
+
+test('static market modules and catalog are served; marketplace defaults off',async t=>{
+  const f=await fixture(t);
+  for(const asset of ['/trade-catalog.js','/work-data.js','/work-marketplace.js']){
+    const res=await f.request(asset);assert.equal(res.status,200,asset);
+    assert.match(res.headers.get('content-type'),/javascript/);
+  }
+  assert.deepEqual(await (await f.request('/api/market/jobs')).json(),{enabled:false,jobs:[]});
+  await f.login();
+  const res=await f.request('/api/market/jobs',{title:'New patio'});
+  assert.equal(res.status,503);
+});
+test('marketplace rejects unsafe ephemeral deployment setting',async()=>{
+  await assert.rejects(createApp({env:{BETA_ACCESS_KEY:secret,MARKETPLACE_ENABLED:'true'}}),/persistent storage/);
+});
+test('marketplace posts stay pending until moderated; bids and contact data stay private',async t=>{
+  const f=await fixture(t,{MARKETPLACE_ENABLED:'true',MARKETPLACE_PERSISTENT_STORAGE_CONFIRMED:'true'});
+  assert.deepEqual(await (await f.request('/api/market/jobs')).json(),{enabled:true,jobs:[]});
+  await f.login();
+  const job={title:'Build a stone paver patio',trade:'hardscaping',city:'Louisburg, NC',budget:'$3500–$5500',
+    scope:'Construct a patio with compacted base, edging, and drainage.',deadline:'2026-12-15',email:'owner@example.test'};
+  assert.equal((await f.request('/api/market/jobs',{...job,trade:'not-real'})).status,400);
+  assert.equal((await f.request('/api/market/jobs',{...job,email:'invalid'})).status,400);
+  const posted=await f.request('/api/market/jobs',job);assert.equal(posted.status,201);
+  const id=(await posted.json()).id;
+  assert.equal((await (await f.request('/api/market/jobs')).json()).jobs.length,0);
+  assert.equal((await f.request('/api/market/bids',{jobId:id,contractor:'Acme',email:'bid@example.test',amount:3200,notes:'We can start next week.'})).status,404);
+  const db=new DatabaseSync(join(f.dir,'savage.sqlite'));
+  assert.equal(db.prepare('SELECT status FROM market_jobs WHERE id=?').get(id).status,'pending');
+  db.prepare("UPDATE market_jobs SET status='approved' WHERE id=?").run(id);
+  db.close();
+  const publicData=await (await f.request('/api/market/jobs')).json();
+  assert.equal(publicData.jobs.length,1);
+  assert.equal(publicData.jobs[0].trade,'hardscaping');
+  assert.doesNotMatch(JSON.stringify(publicData),/owner@example.test/);
+  const bid=await f.request('/api/market/bids',{jobId:id,contractor:'Acme',email:'bid@example.test',amount:'3200',notes:'We can start next week.'});
+  assert.equal(bid.status,201);
+  assert.equal((await f.request('/api/market/report',{jobId:id,reason:'Listing includes incorrect location'})).status,201);
+  assert.doesNotMatch(JSON.stringify(await (await f.request('/api/market/jobs')).json()),/bid@example.test/);
+  assert.equal((await f.request('/api/market/report',{jobId:id,reason:'short'})).status,400);
+});

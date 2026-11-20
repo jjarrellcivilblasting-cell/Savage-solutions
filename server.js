@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {normalizeJobDraft} from './public/work-data.js';
 import {readFile, mkdir, chmod} from 'node:fs/promises';
 import {resolve, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -18,6 +19,9 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
   if (production && parsedOrigin.protocol !== 'https:') throw new Error('Production requires an HTTPS APP_ORIGIN.');
   if (!env.BETA_ACCESS_KEY || env.BETA_ACCESS_KEY.length < 24) throw new Error('Set BETA_ACCESS_KEY to a random secret of at least 24 characters.');
   const enabled = env.AI_ENABLED === 'true';
+  const marketEnabled = env.MARKETPLACE_ENABLED === 'true';
+  // The free ephemeral host must not collect customer details as if it were durable storage.
+  if(marketEnabled && env.MARKETPLACE_PERSISTENT_STORAGE_CONFIRMED !== 'true') throw new Error('Marketplace needs confirmed persistent storage before accepting submissions.');
   if (enabled && (!env.OPENAI_API_KEY || !env.OPENAI_MODEL)) throw new Error('AI requires OPENAI_API_KEY and OPENAI_MODEL.');
   const dailyLimit = Number(env.AI_DAILY_REQUEST_LIMIT || 20);
   if (!Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 10000) throw new Error('Invalid AI_DAILY_REQUEST_LIMIT.');
@@ -26,12 +30,28 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
   const db = new DatabaseSync(resolve(dataDir, 'savage.sqlite'));
   await chmod(resolve(dataDir, 'savage.sqlite'), 0o600);
   db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY, created_at TEXT NOT NULL, liked TEXT NOT NULL, fixes TEXT NOT NULL, missing TEXT NOT NULL); CREATE TABLE IF NOT EXISTS usage (day TEXT PRIMARY KEY, requests INTEGER NOT NULL);');
+  db.exec(`CREATE TABLE IF NOT EXISTS market_jobs (
+    id INTEGER PRIMARY KEY, created_at TEXT NOT NULL, title TEXT NOT NULL,
+    trade TEXT NOT NULL, city TEXT NOT NULL, budget TEXT NOT NULL,
+    scope TEXT NOT NULL, deadline TEXT NOT NULL, contact_email TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending');
+    CREATE TABLE IF NOT EXISTS market_bids (
+    id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL, created_at TEXT NOT NULL,
+    contractor TEXT NOT NULL, contact_email TEXT NOT NULL, amount REAL NOT NULL,
+    notes TEXT NOT NULL, FOREIGN KEY(job_id) REFERENCES market_jobs(id));
+    CREATE TABLE IF NOT EXISTS market_reports (
+    id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL, created_at TEXT NOT NULL,
+    reason TEXT NOT NULL, FOREIGN KEY(job_id) REFERENCES market_jobs(id));`);
   const sessions = new Map(), attempts = new Map();
   let activeCalls = 0;
   const fixedFiles = new Map([
     ['/', ['public/index.html','text/html; charset=utf-8']], ['/index.html',['public/index.html','text/html; charset=utf-8']],
     ['/app.js',['public/app.js','text/javascript; charset=utf-8']], ['/styles.css',['public/styles.css','text/css; charset=utf-8']],
-    ['/calculators.js',['calculators.js','text/javascript; charset=utf-8']], ['/assets/hero.webp',['public/assets/hero.webp','image/webp']]
+    ['/calculators.js',['calculators.js','text/javascript; charset=utf-8']],
+    ['/trade-catalog.js',['public/trade-catalog.js','text/javascript; charset=utf-8']],
+    ['/work-data.js',['public/work-data.js','text/javascript; charset=utf-8']],
+    ['/work-marketplace.js',['public/work-marketplace.js','text/javascript; charset=utf-8']],
+    ['/assets/hero.webp',['public/assets/hero.webp','image/webp']]
   ]);
   function rate(key, limit, interval) {
     const time = now();
@@ -61,6 +81,12 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
         if(req.method !== 'GET' && req.method !== 'POST') throw fail(405,'Method not allowed.');
         if(req.method === 'POST' && req.headers.origin !== origin) throw fail(403,'Request origin is not allowed.');
         if(req.headers['sec-fetch-site'] === 'cross-site') throw fail(403,'Cross-site requests are not allowed.');
+        if(path === '/api/market/jobs' && req.method === 'GET') {
+          if(!marketEnabled)return json(200,{enabled:false,jobs:[]});
+          const jobs=db.prepare(`SELECT id,created_at AS createdAt,title,trade,city,budget,scope,deadline
+            FROM market_jobs WHERE status='approved' ORDER BY id DESC LIMIT 60`).all();
+          return json(200,{enabled:true,jobs});
+        }
         if (path === '/api/login' && req.method === 'POST') {
           rate(`login:${ip}`,5,15*60*1000);
           const input=await body(req);
@@ -77,6 +103,46 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
         if(path === '/api/session' && req.method === 'GET') return json(200,{aiEnabled:enabled});
         if(path === '/api/logout' && req.method === 'POST') {
           sessions.delete(token);res.setHeader('Set-Cookie',`savage_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${production?'; Secure':''}`);return json(200,{ok:true});
+        }
+        if(path === '/api/market/jobs' && req.method === 'POST') {
+          if(!marketEnabled)throw fail(503,'Marketplace is not accepting public postings yet.');
+          rate(`market-post:${ip}`,5,60*60*1000);
+          const input=await body(req);let job;
+          try{job=normalizeJobDraft(input);}catch(error){throw fail(400,error.message);}
+          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
+          const result=db.prepare(`INSERT INTO market_jobs
+            (created_at,title,trade,city,budget,scope,deadline,contact_email,status)
+            VALUES (?,?,?,?,?,?,?,?, 'pending')`).run(
+              new Date(now()).toISOString(),job.title,job.trade,job.city,job.budget,
+              job.scope,job.deadline,input.email.trim());
+          return json(201,{id:Number(result.lastInsertRowid),status:'pending'});
+        }
+        if(path === '/api/market/bids' && req.method === 'POST') {
+          if(!marketEnabled)throw fail(503,'Bidding is not enabled yet.');
+          rate(`market-bid:${ip}`,10,60*60*1000);
+          const input=await body(req);
+          if(!Number.isSafeInteger(input.jobId)||input.jobId<=0)throw fail(400,'Invalid listing.');
+          const job=db.prepare(`SELECT id FROM market_jobs WHERE id=? AND status='approved'`).get(input.jobId);
+          if(!job)throw fail(404,'Approved listing not found.');
+          if(typeof input.contractor!=='string'||input.contractor.trim().length<2||input.contractor.length>120)throw fail(400,'Enter your name or business name.');
+          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
+          const amount=Number(input.amount);
+          if(input.amount===''||input.amount===null||!Number.isFinite(amount)||amount<0||amount>1000000000)throw fail(400,'Enter a valid bid estimate.');
+          if(typeof input.notes!=='string'||input.notes.trim().length<5||input.notes.length>1000)throw fail(400,'Enter a message (5–1,000 characters).');
+          const result=db.prepare(`INSERT INTO market_bids
+            (job_id,created_at,contractor,contact_email,amount,notes) VALUES (?,?,?,?,?,?)`).run(
+              input.jobId,new Date(now()).toISOString(),input.contractor.trim(),input.email.trim(),amount,input.notes.trim());
+          return json(201,{id:Number(result.lastInsertRowid),status:'received_for_review'});
+        }
+        if(path === '/api/market/report' && req.method === 'POST') {
+          if(!marketEnabled)throw fail(503,'Marketplace reports are not enabled yet.');
+          rate(`market-report:${ip}`,10,60*60*1000);
+          const input=await body(req);
+          if(!Number.isSafeInteger(input.jobId)||input.jobId<=0)throw fail(400,'Invalid listing.');
+          if(typeof input.reason!=='string'||input.reason.trim().length<10||input.reason.length>500)throw fail(400,'Describe the issue in 10–500 characters.');
+          if(!db.prepare(`SELECT id FROM market_jobs WHERE id=? AND status='approved'`).get(input.jobId))throw fail(404,'Approved listing not found.');
+          db.prepare('INSERT INTO market_reports (job_id,created_at,reason) VALUES (?,?,?)').run(input.jobId,new Date(now()).toISOString(),input.reason.trim());
+          return json(201,{ok:true});
         }
         if(path === '/api/feedback' && req.method === 'POST') {
           rate(`feedback:${ip}`,10,60*60*1000);const input=await body(req);
