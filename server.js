@@ -49,6 +49,7 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
     ['/app.js',['public/app.js','text/javascript; charset=utf-8']], ['/styles.css',['public/styles.css','text/css; charset=utf-8']],
     ['/calculators.js',['calculators.js','text/javascript; charset=utf-8']],
     ['/trade-catalog.js',['public/trade-catalog.js','text/javascript; charset=utf-8']],
+    ['/i18n.js',['public/i18n.js','text/javascript; charset=utf-8']],
     ['/work-data.js',['public/work-data.js','text/javascript; charset=utf-8']],
     ['/work-marketplace.js',['public/work-marketplace.js','text/javascript; charset=utf-8']],
     ['/assets/hero.webp',['public/assets/hero.webp','image/webp']]
