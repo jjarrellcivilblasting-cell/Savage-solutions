@@ -109,7 +109,7 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
           rate(`market-post:${ip}`,5,60*60*1000);
           const input=await body(req);let job;
           try{job=normalizeJobDraft(input);}catch(error){throw fail(400,error.message);}
-          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
+          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
           const result=db.prepare(`INSERT INTO market_jobs
             (created_at,title,trade,city,budget,scope,deadline,contact_email,status)
             VALUES (?,?,?,?,?,?,?,?, 'pending')`).run(
@@ -125,7 +125,7 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
           const job=db.prepare(`SELECT id FROM market_jobs WHERE id=? AND status='approved'`).get(input.jobId);
           if(!job)throw fail(404,'Approved listing not found.');
           if(typeof input.contractor!=='string'||input.contractor.trim().length<2||input.contractor.length>120)throw fail(400,'Enter your name or business name.');
-          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
+          if(typeof input.email!=='string'||input.email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(input.email.trim()))throw fail(400,'Enter a valid contact email.');
           const amount=Number(input.amount);
           if(input.amount===''||input.amount===null||!Number.isFinite(amount)||amount<0||amount>1000000000)throw fail(400,'Enter a valid bid estimate.');
           if(typeof input.notes!=='string'||input.notes.trim().length<5||input.notes.length>1000)throw fail(400,'Enter a message (5–1,000 characters).');
