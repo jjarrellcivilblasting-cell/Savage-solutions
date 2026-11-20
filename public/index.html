@@ -9,6 +9,8 @@
 <div class="ask"><h2>What can we solve today?</h2><p id="aiStatus" role="status">Sign in to check AI availability.</p><div id="chatLog" role="log" aria-label="Conversation" aria-live="polite"></div><form id="chatForm"><label for="problem">Your question</label><textarea id="problem" required maxlength="4000" placeholder="Describe your job, dimensions, or problem"></textarea><button id="solve" type="submit" class="red" disabled>FIND THE SOLUTION</button></form><button id="newChat" class="btn" type="button">NEW CHAT</button><p id="chatStatus" role="status"></p><small>AI can make mistakes. Verify estimates and use qualified professionals for hazardous work. Chat is sent to the AI provider when enabled; it is not saved by this app.</small></div></div>
 <div class="section"><h2>QUICK ACCESS</h2><div class="grid">
 <button type="button" class="card goto" data-page="tools"><b>TOOLS</b><small>Working calculators</small></button>
+<button type="button" class="card goto" data-page="work"><b>FIND WORK</b><small>Projects, bidding & freight loads</small></button>
+<button type="button" class="card goto" data-page="work"><b>POST A JOB</b><small>Prepare a project for contractors</small></button>
 <button type="button" class="card goto" data-page="yard"><b>THE YARD</b><small>Community — coming later</small></button>
 <button type="button" class="card goto" data-page="projects"><b>PROJECTS</b><small>Jobs and builds</small></button>
 <button type="button" class="card goto" data-page="feedback"><b>FEEDBACK</b><small>Send feedback</small></button>
@@ -29,10 +31,37 @@
 <div id="hours" class="toolbox"><h2>MAN HOURS</h2><div class="row"><label>Workers<input id="workers" type="number" min="1" step="1" value="3"></label><label>Hours each<input id="eachHours" type="number" min="0" step="any" value="8"></label><label>Hourly rate<input id="hourRate" type="number" min="0" step="any" value="35"></label></div><button id="hoursCalc" type="button" class="red">CALCULATE LABOR</button><div class="metric">Labor<strong id="hoursResult">—</strong></div></div>
 </div>
 
+
+<div id="work" class="page"><h2>FIND WORK &amp; BID CENTER</h2>
+<p class="sub">Let Savage Tech help solve your lack-of-work problem. Find contracts, freight and local jobs — or get your project ready to list.</p>
+<p id="marketMode" role="status">Checking marketplace availability…</p>
+<h3>Available Savage marketplace projects</h3>
+<div class="row"><label>Trade<select id="workTrade"></select></label><label>Search location or work<input id="workQuery" type="search" placeholder="City, county, project"></label></div>
+<div id="workFeed" aria-live="polite"></div>
+<h3>Free public bid sources &amp; freight boards</h3>
+<p>These links open independent providers. They are not live Savage listings or guaranteed available jobs. Always verify deadlines, license requirements and freight brokers.</p>
+<div id="workSources"></div>
+<h3>Have work? Post a job</h3>
+<p>Customers, property owners, builders and contractors can prepare projects here. Public listing submissions are held for moderation; no job is shown automatically.</p>
+<form id="workForm">
+<label>Project title<input id="postTitle" required minlength="5" maxlength="120" placeholder="Install 600 sq ft paver patio"></label>
+<div class="row"><label>Trade<select id="postTrade" required></select></label><label>City and state<input id="postCity" required minlength="3" maxlength="120" placeholder="Raleigh, NC"></label></div>
+<div class="row"><label>Budget or rate (optional)<input id="postBudget" maxlength="80" placeholder="Budget range or request quotes"></label><label>Bid deadline (optional)<input id="postDeadline" type="date"></label></div>
+<label>Scope and job details<textarea id="postScope" required minlength="20" maxlength="2000" placeholder="Describe dimensions, access, timing, materials, equipment and requirements. Do not include private addresses or phone numbers."></textarea></label>
+<label>Private contact email (required only for beta submission)<input id="postEmail" type="email" maxlength="254" placeholder="Only marketplace moderators can access this"></label>
+<div class="row"><button id="saveWorkDraft" type="button" class="btn">SAVE PRIVATE DRAFT</button><button id="submitListing" type="submit" class="red" hidden>SUBMIT FOR REVIEW</button></div>
+<p id="workStatus" role="status" aria-live="polite"></p>
+</form>
+<h3>My posting drafts</h3><p>Drafts stay in this browser only. Saving a draft does not put a job online. Contact email is not saved in drafts.</p>
+<div id="workDrafts"></div>
+<p><button type="button" class="goto btn" data-page="tools">OPEN BID ESTIMATOR</button></p>
+</div>
+
 <div id="yard" class="page"><h2>THE YARD</h2><p>Community posting and a professional directory are planned for a future release. They are not available in this beta.</p><button class="btn goto" data-page="home" type="button">ASK THE AI ASSISTANT</button></div>
 <div id="projects" class="page"><h2>PROJECTS & ESTIMATES</h2><p>Saved in this browser only, including after sign out. Export a backup before clearing browser data or using a shared device.</p><form id="projectForm"><label>Project name<input id="projectName" required maxlength="120"></label><label>Notes<textarea id="projectNotes" maxlength="2000"></textarea></label><button type="submit" class="red">CREATE PROJECT</button></form><p id="projectStatus" role="status"></p><div id="projectList"></div><h2>Saved estimates</h2><p>Build a quote in Tools, then save it here.</p><div id="estimateList"></div><button id="exportData" class="btn" type="button">EXPORT PROJECTS & ESTIMATES</button></div>
 <div id="feedback" class="page feedback"><h2>FEEDBACK</h2><div class="sub">Send feedback to the Savage Solutions team. Do not include sensitive personal information.</div><label>What do you like?<textarea id="like" maxlength="2000"></textarea></label><label>What needs fixing?<textarea id="bad" maxlength="2000"></textarea></label><label>What's missing?<textarea id="missing" maxlength="2000"></textarea></label><button id="saveFeedback" type="button" class="red">SEND FEEDBACK</button><div id="feedbackResult" class="metric" hidden role="status"></div></div>
 
-</main><nav class="nav" aria-label="Main navigation"><button type="button" class="goto" data-page="home">HOME</button><button type="button" class="goto" data-page="tools">TOOLS</button><button type="button" class="goto" data-page="projects">PROJECTS</button><button type="button" class="goto" data-page="yard">YARD</button><button type="button" class="goto" data-page="feedback">FEEDBACK</button></nav>
+</main><nav class="nav" aria-label="Main navigation"><button type="button" class="goto" data-page="home">HOME</button><button type="button" class="goto" data-page="tools">TOOLS</button><button type="button" class="goto" data-page="projects">PROJECTS</button><button type="button" class="goto" data-page="work">WORK</button><button type="button" class="goto" data-page="feedback">FEEDBACK</button></nav>
 </div>
-<script type="module" src="/app.js"></script></body></html>
+<script type="module" src="/app.js"></script>
+<script type="module" src="/work-marketplace.js"></script></body></html>
