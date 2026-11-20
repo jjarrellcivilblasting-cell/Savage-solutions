@@ -93,6 +93,12 @@ const {tmpdir}=require('node:os');const {join}=require('node:path');
       await page.click('[data-tool="pavers"]');await page.click('#pavers button.red');
       await page.waitForFunction(()=>document.querySelector('#pavers .metric').textContent.includes('Resultado'));
       assert.match(await page.textContent('#pavers .metric'),/330 ft² por pedir/);
+
+      await page.selectOption('#tradeSelect','all');
+      await page.click('[data-tool="board"]');await page.fill('#bt','-1');
+      await page.click('#boardCalc');
+      await page.waitForFunction(()=>document.querySelector('#boardResult').textContent.includes('Espesor debe ser'));
+
       await page.reload();
       await page.waitForFunction(()=>document.documentElement.lang==='es'&&document.querySelector('#languageSelect').value==='es');
       assert.match(await page.textContent('.nav [data-page="work"]'),/TRABAJO/);
