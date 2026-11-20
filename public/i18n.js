@@ -1,4 +1,18 @@
 const es = {
+  "You:": "Tú:",
+  "Savage AI:": "IA Savage:",
+  "Thickness": "Espesor",
+  "Diameter": "Diámetro",
+  "Margin": "Margen",
+  "Equipment": "Equipo",
+  "Labor hours": "Horas de trabajo",
+  "Hours each": "Horas por trabajador",
+  "feet": "pies",
+  "inches": "pulgadas",
+  "tons/yd³": "toneladas/yd³",
+  "ft²": "ft²",
+  "ft³": "ft³",
+  "ft² to order": "ft² por pedir",
   "Private beta": "Prueba beta privada",
   "Sign out": "Cerrar sesión",
   "Welcome to the beta": "Bienvenido a la versión beta",
@@ -330,6 +344,11 @@ const originalText = new WeakMap();
 const originalAttrs = new WeakMap();
 const supportedAttrs = ['placeholder','aria-label','title'];
 const replacements = [
+  [/^(.+) is required\\.$/, m => localize(m[1]) + ' es obligatorio.'],
+  [/^(.+) must be (a whole number|a number) (greater than zero|from ([0-9.]+)) and at most ([0-9.]+)\\.$/, m => localize(m[1]) + ' debe ser ' + (m[2]==='a whole number'?'un número entero':'un número') + (m[3]==='greater than zero'?' mayor que cero':' desde '+m[4]) + ' y como máximo ' + m[5] + '.'],
+  [/^([0-9,.]+) bd ft( \\(Doyle estimate\\))?$/, m => m[1] + ' pies tablares' + (m[2]?' (estimación Doyle)':'')],
+  [/^([0-9,.]+) (yd³|ft²|ft² to order|% grade|US gallons|short tons|meters)$/, m => m[1] + ' ' + localize(m[2])],
+
   [/^(\d+) calculators? available across all trades\. More tools will be added\.$/, m => m[1] + ' calculadoras disponibles para todos los oficios. Se añadirán más herramientas.'],
   [/^(\d+) calculators? available for (.+)\. More tools will be added\.$/, m => m[1] + ' calculadoras disponibles para ' + localize(m[2]) + '. Se añadirán más herramientas.'],
   [/^Job #(\d+) submitted for moderation\. It is NOT publicly listed until approved\.$/, m => 'Trabajo n.º ' + m[1] + ' enviado a revisión. NO se publicará hasta que sea aprobado.'],
