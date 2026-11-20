@@ -44,3 +44,11 @@ Age rating, privacy answers, support email, seller legal name and merchant discl
 
 Apple official review guidance: https://developer.apple.com/app-store/review/guidelines/
 Developer enrollment: https://developer.apple.com/programs/
+
+## Spanish App Store localization draft (not submitted)
+- Locale: Spanish (Mexico) / `es-MX` (confirm supported App Store locale and target markets in App Store Connect).
+- Name: **Savage Solutions**
+- Subtitle draft: **Oficios, obras y presupuestos**
+- Description draft: **Savage Solutions reúne herramientas prácticas para contratistas y dueños de proyectos. Calcula materiales, prepara presupuestos, guarda borradores de trabajos y consulta enlaces a licitaciones públicas y bolsas de cargas. Incluye oficios como paisajismo, adoquines, excavación y concreto. Comprueba cada estimación y verifica la disponibilidad de los anuncios en sus fuentes originales.**
+- Bilingual interface: **English / Español**, preference saved locally. App Store screenshots in Spanish and translated privacy notices should be reviewed before submission.
+- Limitation: user-submitted job descriptions, AI outputs and third-party websites are not automatically translated. Do not advertise real-time bilingual matching.
