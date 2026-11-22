@@ -13,6 +13,7 @@
 <button type="button" class="card goto" data-page="work"><b>POST A JOB</b><small>Prepare a project for contractors</small></button>
 <button type="button" class="card goto" data-page="yard"><b>THE YARD</b><small>Community — coming later</small></button>
 <button type="button" class="card goto" data-page="projects"><b>PROJECTS</b><small>Jobs and builds</small></button>
+<button type="button" class="card goto" data-page="team"><b>TEAM HUB</b><small>Employer and employee preview</small></button>
 <button type="button" class="card goto" data-page="feedback"><b>FEEDBACK</b><small>Send feedback</small></button>
 </div></div></div>
 
@@ -59,9 +60,55 @@
 
 <div id="yard" class="page"><h2>THE YARD</h2><p>Community posting and a professional directory are planned for a future release. They are not available in this beta.</p><button class="btn goto" data-page="home" type="button">ASK THE AI ASSISTANT</button></div>
 <div id="projects" class="page"><h2>PROJECTS & ESTIMATES</h2><p>Saved in this browser only, including after sign out. Export a backup before clearing browser data or using a shared device.</p><form id="projectForm"><label>Project name<input id="projectName" required maxlength="120"></label><label>Notes<textarea id="projectNotes" maxlength="2000"></textarea></label><button type="submit" class="red">CREATE PROJECT</button></form><p id="projectStatus" role="status"></p><div id="projectList"></div><h2>Saved estimates</h2><p>Build a quote in Tools, then save it here.</p><div id="estimateList"></div><button id="exportData" class="btn" type="button">EXPORT PROJECTS & ESTIMATES</button></div>
+
+<div id="team" class="page">
+<h2>TEAM HUB</h2>
+<p class="sub">Preview the employer and employee experience for organization contracts.</p>
+<p class="demo-notice" role="note">Prototype only. Demo PINs, employee names, and time punches stay in this page session and are not real accounts or payroll records. Do not enter real employee information.</p>
+<div class="role-switch" role="group" aria-label="Choose preview role">
+<button id="showEmployer" type="button" class="role-tab" aria-pressed="true">EMPLOYER VIEW</button>
+<button id="showEmployee" type="button" class="role-tab" aria-pressed="false">EMPLOYEE VIEW</button>
+</div>
+<section id="employerPanel" class="team-panel">
+<p class="eyebrow">ORGANIZATION PREVIEW</p>
+<h3>Team contract</h3>
+<p>One organization subscription could cover the crew tools below. Organization pricing and seat limits are not set yet, so this preview shows no price or charge.</p>
+<div class="feature-grid">
+<article><b>Individual PIN access</b><small>Each employee signs in with their own employer-issued PIN.</small></article>
+<article><b>Time stamps</b><small>Workers clock in and out; supervisors review crew time records.</small></article>
+<article><b>Crew translation</b><small>Two-way English and Spanish communication for the whole crew.</small></article>
+<article><b>Supervisor view</b><small>See team attendance and operational notices in one place.</small></article>
+</div>
+<h3>Demo crew</h3>
+<ul id="demoCrew" class="crew-list"><li><span>Jordan — Crew lead</span><span class="badge">PIN enabled</span></li><li><span>Alex — Concrete crew</span><span class="badge">PIN enabled</span></li><li><span>María — Rebar crew</span><span class="badge">PIN enabled</span></li></ul>
+<form id="addDemoCrew" class="demo-form"><label for="newCrewName">Add a sample crew member</label><div class="row"><input id="newCrewName" maxlength="50" placeholder="Demo name only"><button class="btn" type="submit">ADD TO PREVIEW</button></div></form>
+<p><button id="openEmployeePreview" class="red" type="button">PREVIEW EMPLOYEE EXPERIENCE</button></p>
+</section>
+<section id="employeePanel" class="team-panel" hidden>
+<p class="eyebrow">EMPLOYEE PREVIEW</p>
+<h3>Sign in with your individual PIN</h3>
+<p>Demo PIN: <b>2468</b>. A real PIN sign-in needs secure employee accounts on the server.</p>
+<form id="demoPinForm" class="demo-form"><label for="demoPin">Employee PIN<input id="demoPin" inputmode="numeric" autocomplete="off" pattern="[0-9]{4}" maxlength="4" value="2468" required></label><button class="red" type="submit">SIGN IN TO PREVIEW</button><p id="pinStatus" role="status"></p></form>
+<div id="employeeTools" hidden>
+<h3>Time clock</h3>
+<p id="clockStatus" role="status">You are not clocked in.</p>
+<button id="clockButton" class="red" type="button">CLOCK IN</button>
+<div id="demoPunches" class="punch-list" aria-live="polite"></div>
+<h3>Crew translation preview</h3>
+<p>Choose a jobsite phrase to see a sample English and Spanish version. Live spoken translation is not connected in this prototype.</p>
+<div class="phrase-buttons">
+<button type="button" class="phrase btn" data-en="Bring the rebar over here." data-es="Trae la varilla para acá.">Rebar</button>
+<button type="button" class="phrase btn" data-en="Tie this section before the pour." data-es="Amarra esta sección antes del colado.">Concrete</button>
+<button type="button" class="phrase btn" data-en="Watch your footing near the excavator." data-es="Cuida dónde pisas cerca de la excavadora.">Equipment safety</button>
+</div>
+<div class="translation-sample" aria-live="polite"><p><b>English</b><span id="sampleEnglish">Choose a sample phrase.</span></p><p><b>Español</b><span id="sampleSpanish">Elige una frase de ejemplo.</span></p></div>
+</div>
+</section>
+</div>
+
 <div id="feedback" class="page feedback"><h2>FEEDBACK</h2><div class="sub">Send feedback to the Savage Solutions team. Do not include sensitive personal information.</div><label>What do you like?<textarea id="like" maxlength="2000"></textarea></label><label>What needs fixing?<textarea id="bad" maxlength="2000"></textarea></label><label>What's missing?<textarea id="missing" maxlength="2000"></textarea></label><button id="saveFeedback" type="button" class="red">SEND FEEDBACK</button><div id="feedbackResult" class="metric" hidden role="status"></div></div>
 
-</main><nav class="nav" aria-label="Main navigation"><button type="button" class="goto" data-page="home">HOME</button><button type="button" class="goto" data-page="tools">TOOLS</button><button type="button" class="goto" data-page="projects">PROJECTS</button><button type="button" class="goto" data-page="work">WORK</button><button type="button" class="goto" data-page="feedback">FEEDBACK</button></nav>
+</main><nav class="nav" aria-label="Main navigation"><button type="button" class="goto" data-page="home">HOME</button><button type="button" class="goto" data-page="tools">TOOLS</button><button type="button" class="goto" data-page="projects">PROJECTS</button><button type="button" class="goto" data-page="work">WORK</button><button type="button" class="goto" data-page="team">TEAM</button><button type="button" class="goto" data-page="feedback">FEEDBACK</button></nav>
 </div>
 <script type="module" src="/app.js"></script>
 <script type="module" src="/work-marketplace.js"></script></body></html>
