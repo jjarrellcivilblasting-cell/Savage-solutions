@@ -131,4 +131,48 @@ $('projectForm').onsubmit=event=>{event.preventDefault();const name=$('projectNa
 $('saveEstimate').onclick=()=>{if(!latestQuote)return;if(records.estimates.length>=200){location.hash='projects';return status('projectStatus','Export and remove older estimates before adding more.',true);}const name=prompt('Name this estimate:','Job estimate');if(!name?.trim())return;if(persist({...records,estimates:[...records.estimates,{id:crypto.randomUUID(),name:name.trim().slice(0,120),...latestQuote,createdAt:new Date().toISOString()}]})){location.hash='projects';status('projectStatus','Estimate saved in this browser.');}else location.hash='projects';};
 $('exportData').onclick=()=>{let content;try{content=storageReady?JSON.stringify(records,null,2):localStorage.getItem(storageKey);if(!content)throw Error();}catch{return status('projectStatus','Browser storage cannot be accessed for export.',true);}const url=URL.createObjectURL(new Blob([content],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='savage-solutions-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 window.addEventListener('storage',event=>{if(event.key!==storageKey)return;try{records=event.newValue?validateRecords(JSON.parse(event.newValue)):{projects:[],estimates:[]};storageReady=true;renderRecords();status('projectStatus','Saved records updated in another tab.');}catch{storageReady=false;status('projectStatus','Another tab wrote unreadable data. Saves are blocked; export a recovery copy.',true);}});
+
+// Team role preview. All demo data stays in page memory and is cleared on refresh.
+function setTeamPreview(role){
+  const employer=role==='employer';
+  $('employerPanel').hidden=!employer;
+  $('employeePanel').hidden=employer;
+  $('showEmployer').setAttribute('aria-pressed',String(employer));
+  $('showEmployee').setAttribute('aria-pressed',String(!employer));
+}
+$('showEmployer').onclick=()=>setTeamPreview('employer');
+$('showEmployee').onclick=()=>setTeamPreview('employee');
+$('openEmployeePreview').onclick=()=>{setTeamPreview('employee');$('teamPin').focus();};
+$('addDemoCrew').onsubmit=event=>{
+  event.preventDefault();
+  const name=$('newCrewName').value.trim().slice(0,50);
+  if(!name)return;
+  const item=document.createElement('li'),label=document.createElement('span'),badge=document.createElement('span');
+  label.textContent=name+' — Sample crew';
+  badge.className='badge';badge.textContent='Demo PIN';
+  item.append(label,badge);$('demoCrew').append(item);$('newCrewName').value='';
+};
+$('demoPinForm').onsubmit=event=>{
+  event.preventDefault();
+  const valid=$('demoPin').value==='2468';
+  $('employeeTools').hidden=!valid;
+  status('pinStatus',valid?'Preview unlocked. This is not a real employee account.':'Use the sample PIN 2468.',!valid);
+  if(valid)$('clockButton').focus();
+};
+let demoClockedIn=false;
+$('clockButton').onclick=()=>{
+  demoClockedIn=!demoClockedIn;
+  const time=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  status('clockStatus',demoClockedIn?'Clocked in at '+time+' (demo only).':'Clocked out at '+time+' (demo only).');
+  $('clockButton').textContent=demoClockedIn?'CLOCK OUT':'CLOCK IN';
+  const item=document.createElement('p');
+  item.textContent=(demoClockedIn?'Clock in — ':'Clock out — ')+time+' · preview only';
+  $('demoPunches').prepend(item);
+};
+document.querySelectorAll('.phrase').forEach(button=>button.addEventListener('click',()=>{
+  $('sampleEnglish').textContent=button.dataset.en;
+  $('sampleSpanish').textContent=button.dataset.es;
+}));
+setTeamPreview('employer');
+
 renderRecords();session();
