@@ -30,3 +30,28 @@ h2{margin:0 0 6px;color:#dfc098}.sub{color:#aa967d;margin-bottom:12px}.grid{disp
 .market-bid label{margin-bottom:10px}
 #marketMode{border-left:3px solid #ba8d4e;padding-left:10px}
 @media(max-width:520px){#workForm .row{grid-template-columns:1fr}#work .row:first-of-type{grid-template-columns:1fr}}
+
+
+/* Employer and employee preview */
+.role-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.role-tab{min-height:46px;border:1px solid #76583d;border-radius:10px;background:#18120e;color:#c7b195;font-weight:800}
+.role-tab[aria-pressed="true"]{background:#5b1915;color:#ffe0c0;border-color:#c68a50}
+.demo-notice{border-left:4px solid #d09a4e;background:#20170f;padding:12px;border-radius:8px;color:#f0d7b0}
+.team-panel{padding:16px;border:1px solid #76583d;border-radius:14px;background:#120e0b}
+.team-panel h3{color:#dfc098;margin:18px 0 8px}
+.eyebrow{color:#dba366;font-size:12px;font-weight:800;letter-spacing:.08em}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.feature-grid article{padding:12px;border:1px solid #543d2a;border-radius:10px;background:#18120e}
+.feature-grid b,.feature-grid small{display:block}
+.feature-grid small{margin-top:6px;color:#bca483;line-height:1.4}
+.crew-list{padding:0;list-style:none}
+.crew-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;border-bottom:1px solid #3e3022}
+.badge{border:1px solid #76583d;border-radius:99px;padding:4px 9px;color:#e5c49b;font-size:12px;white-space:nowrap}
+.demo-form{margin:16px 0}
+.demo-form .row{align-items:end}
+.punch-list p{padding:9px;border-bottom:1px solid #3e3022}
+.phrase-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.translation-sample{margin-top:12px;padding:8px 12px;border:1px solid #5f4631;border-radius:10px}
+.translation-sample p{display:grid;gap:4px}
+.translation-sample b{color:#dfc098}
+@media(max-width:520px){.feature-grid{grid-template-columns:1fr}.demo-form .row{grid-template-columns:1fr}.crew-list li{align-items:flex-start;flex-direction:column}}
