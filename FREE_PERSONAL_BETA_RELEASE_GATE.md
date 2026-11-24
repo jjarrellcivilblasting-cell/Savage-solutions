@@ -27,7 +27,7 @@ Not approved for unrestricted public launch. Review this checklist and collect r
 
 ## Monetization and user experience decisions (November 24)
 - Free tier can display a clearly labeled, unobtrusive dashboard advertisement after ad-network approval; never use forced interstitials, deceptive dismiss buttons or ads that interrupt calculations, live translation or safety workflows.
-- Premium tier is ad-free. The 30-day trial begins only when the user explicitly activates it, is recorded per verified account and cannot reset on logout or a new device.
+- Premium tier may be offered as an optional paid upgrade without any trial. No 30-day trial or automatic trial activation. The only requirement for using the free tools is creating an individual account.
 - Test a tool-first home screen (search, four shortcuts, recent projects, unobtrusive ad) against category navigation. Track time-to-first-tool, task completion and repeat use; do not assume the winner before testing.
 - Collect privacy-conscious account-level analytics for tool usage, conversions and subscription state. Do not record private translation or project contents in analytics by default.
 - Proposed prices and enterprise employee plans require separate approval and implementation. No domain purchase, ad integration, payment integration or production release has been completed.
@@ -35,6 +35,6 @@ Not approved for unrestricted public launch. Review this checklist and collect r
 ## Next implementation order
 1. Implement secure individual registration, login, verification, recovery and deletion.
 2. Add durable account-owned project data and migrate/export existing browser-only drafts.
-3. Add server-side entitlements and explicitly activated, nonrenewing 30-day Premium trial.
+3. Add server-side entitlements for optional paid subscriptions; no free trial.
 4. Build the tool-first dashboard and privacy-conscious usage events.
 5. Evaluate advertising providers, payment requirements and accessibility; test with real users before enabling either.
