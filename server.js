@@ -18,6 +18,10 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
   const production = env.NODE_ENV === 'production';
   if (production && parsedOrigin.protocol !== 'https:') throw new Error('Production requires an HTTPS APP_ORIGIN.');
   if (!env.BETA_ACCESS_KEY || env.BETA_ACCESS_KEY.length < 24) throw new Error('Set BETA_ACCESS_KEY to a random secret of at least 24 characters.');
+  // Additional beta invitation keys are configured as SHA-256 digests; never commit raw keys.
+  const extraInviteHashes = (env.BETA_EXTRA_INVITE_SHA256 || '').split(',').map(value => value.trim()).filter(Boolean);
+  if (extraInviteHashes.length > 100 || extraInviteHashes.some(value => !/^[a-f0-9]{64}$/i.test(value))) throw new Error('Invalid BETA_EXTRA_INVITE_SHA256.');
+  const inviteHashes = [hash(env.BETA_ACCESS_KEY), ...extraInviteHashes.map(value => Buffer.from(value, 'hex'))];
   const enabled = env.AI_ENABLED === 'true';
   const marketEnabled = env.MARKETPLACE_ENABLED === 'true';
   // The free ephemeral host must not collect customer details as if it were durable storage.
@@ -91,7 +95,7 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
         if (path === '/api/login' && req.method === 'POST') {
           rate(`login:${ip}`,5,15*60*1000);
           const input=await body(req);
-          if(typeof input.key !== 'string' || !timingSafeEqual(hash(input.key), hash(env.BETA_ACCESS_KEY))) throw fail(401,'Incorrect invitation key.');
+          if(typeof input.key !== 'string' || !inviteHashes.some(digest => timingSafeEqual(hash(input.key), digest))) throw fail(401,'Incorrect invitation key.');
           for(const [key,s] of sessions) if(s.expires <= now()) sessions.delete(key);
           if(sessions.size >= 1000) throw fail(503,'Too many active sessions. Try again later.');
           const token=randomBytes(32).toString('hex'); sessions.set(token,{expires:now()+8*60*60*1000});
