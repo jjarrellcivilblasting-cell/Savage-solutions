@@ -6,7 +6,7 @@ const text=(id,value)=>{$(id).textContent=value;};
 let aiEnabled=false, signedIn=false, busy=false, messages=[], latestQuote=null, backgroundUrl=null;
 const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
 function status(id,message,error=false){text(id,message);$(id).classList.toggle('error',error);}
-function updateChat(){ $('solve').disabled=!aiEnabled || !signedIn || busy; $('newChat').disabled=busy; $('logout').disabled=busy; }
+function updateChat(){ $('solve').disabled=!aiEnabled || !signedIn || busy; $('newChat').disabled=busy; $('logout').disabled=busy; updateVoiceControls(); }
 async function api(path, data) {
   const response=await fetch(path,{method:data===undefined?'GET':'POST',credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),signal:AbortSignal.timeout(30000)});
   let result;try{result=await response.json();}catch{throw new Error('Server returned an invalid response. Please try again.');}
@@ -19,7 +19,7 @@ $('loginForm').onsubmit=async event=>{
   try{await api('/api/login',{key:$('accessKey').value});$('accessKey').value='';await session();status('loginStatus','Signed in.');}
   catch(error){status('loginStatus',error.message,true);}finally{button.disabled=false;}
 };
-$('logout').onclick=async()=>{try{await api('/api/logout',{});signedIn=false;aiEnabled=false;messages=[];$('chatLog').replaceChildren();authUI();status('loginStatus','Signed out.');}catch(error){status('chatStatus',error.message,true);}};
+$('logout').onclick=async()=>{stopVoice();try{await api('/api/logout',{});signedIn=false;aiEnabled=false;messages=[];lastReply='';readReplies=false;$('chatLog').replaceChildren();authUI();status('loginStatus','Signed out.');}catch(error){status('chatStatus',error.message,true);}};
 function showPage(){
   const requested=location.hash.slice(1) || 'home';const name=['home','tools','work','yard','projects','feedback'].includes(requested)?requested:'home';
   document.querySelectorAll('.page').forEach(page=>page.classList.toggle('active',page.id===name));
@@ -82,17 +82,63 @@ calculate('jobCalc','jobResult',()=>{latestQuote=null;$('saveEstimate').disabled
 ['jh','jr','jm','je','mar'].forEach(id=>$(id).addEventListener('input',()=>{latestQuote=null;$('saveEstimate').disabled=true;text('jobResult','Inputs changed. Build the quote again.');}));
 calculate('hoursCalc','hoursResult',()=>{const result=labor(...values('workers','eachHours','hourRate'));return `${result.hours.toFixed(1)} man-hours / ${money(result.cost)}`;});
 function message(role,content){const node=document.createElement('div');node.className=`message ${role}`;const label=document.createElement('strong');label.textContent=role==='user'?'You: ':'Savage AI: ';const body=document.createElement('span');body.dataset.noTranslate='';body.textContent=content;node.append(label,body);$('chatLog').append(node);$('chatLog').scrollTop=$('chatLog').scrollHeight;}
+// Voice input and speech playback use opt-in browser services.
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const synth=window.speechSynthesis;
+const canSpeak=!!(synth&&window.SpeechSynthesisUtterance);
+let recognition=null,readReplies=false,lastReply='';
+const voiceBar=document.createElement('div');voiceBar.className='row';voiceBar.dataset.noTranslate='';
+function voiceControl(){const b=document.createElement('button');b.type='button';b.className='btn';voiceBar.append(b);return b;}
+const mic=voiceControl(),read=voiceControl(),replay=voiceControl(),stop=voiceControl();
+const voiceStatus=document.createElement('p');voiceStatus.dataset.noTranslate='';voiceStatus.setAttribute('role','status');
+const voiceNote=document.createElement('small');voiceNote.dataset.noTranslate='';
+$('chatForm').after(voiceBar,voiceStatus,voiceNote);
+const words=(en,es)=>document.documentElement.lang.startsWith('es')?es:en;
+const voiceLang=()=>words('en-US','es-US');
+function updateVoiceControls(){
+ const ready=signedIn&&aiEnabled&&!busy;
+ mic.disabled=!ready||!Recognition;mic.textContent=recognition?words('STOP LISTENING','DEJAR DE ESCUCHAR'):words('TAP TO TALK','TOCA PARA HABLAR');
+ read.disabled=!ready||!canSpeak;read.textContent=readReplies?words('SPOKEN REPLIES: ON','RESPUESTAS POR VOZ: SÍ'):words('SPOKEN REPLIES: OFF','RESPUESTAS POR VOZ: NO');read.setAttribute('aria-pressed',String(readReplies));
+ replay.disabled=!ready||!canSpeak||!lastReply||!!recognition;replay.textContent=words('READ LAST ANSWER','LEER RESPUESTA');
+ stop.disabled=!canSpeak;stop.textContent=words('STOP AUDIO','DETENER AUDIO');
+ voiceNote.textContent=Recognition?words('Tap to talk sends recognized speech as text. Your browser may use an online speech service; Savage AI receives only the transcript.','Toca para hablar y enviar el texto reconocido. El navegador puede usar un servicio de voz en línea; Savage AI solo recibe la transcripción.'):words('Voice input is unavailable here. Use the keyboard microphone to dictate, then tap Find the Solution.','La entrada de voz no está disponible aquí. Usa el micrófono del teclado y toca Buscar solución.');
+}
+function stopVoice(){if(recognition){const active=recognition;recognition=null;try{active.abort();}catch{}}if(canSpeak)synth.cancel();updateVoiceControls();}
+function speakReply(answer){
+ if(!canSpeak||!signedIn||!aiEnabled||recognition)return;
+ synth.cancel();const spoken=answer.replace(/[*#_~`]/g,'').trim();if(!spoken)return;
+ const parts=spoken.match(/.{1,180}(?:\s|$)|\S{1,180}/gs)||[spoken];
+ for(const part of parts){if(!part.trim())continue;const u=new SpeechSynthesisUtterance(part);u.lang=voiceLang();u.rate=1;u.onerror=e=>{if(!['canceled','interrupted'].includes(e.error))voiceStatus.textContent=words('Audio could not play. Tap Read last answer.','No se pudo reproducir. Toca Leer respuesta.');};synth.speak(u);}
+}
+mic.onclick=()=>{
+ if(!signedIn||!aiEnabled||busy||!Recognition)return;
+ if(recognition){try{recognition.stop();}catch{stopVoice();}return;}
+ if(canSpeak){synth.cancel();readReplies=true;}
+ const active=new Recognition();recognition=active;let transcript='',failed=false;
+ active.lang=voiceLang();active.interimResults=false;active.continuous=false;active.maxAlternatives=1;
+ active.onresult=e=>{if(recognition!==active)return;for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)transcript+=' '+e.results[i][0].transcript;};
+ active.onerror=()=>{failed=true;if(recognition===active)voiceStatus.textContent=words('Could not hear you. Check microphone permission or use keyboard dictation.','No se pudo escuchar. Revisa el permiso del micrófono o usa el dictado del teclado.');};
+ active.onend=()=>{if(recognition!==active)return;recognition=null;updateVoiceControls();if(failed)return;const q=transcript.trim();if(!q){voiceStatus.textContent=words('No speech recognized. Tap to try again.','No se reconoció voz. Toca para intentar otra vez.');return;}if(!signedIn||!aiEnabled||busy)return;const field=$('problem');const draft=!!field.value.trim();field.value=(draft?field.value.trim()+' '+q:q).slice(0,4000);voiceStatus.textContent=draft?words('Review your question before sending.','Revisa tu pregunta antes de enviarla.'):'';if(!draft)$('chatForm').requestSubmit();};
+ voiceStatus.textContent=words('Listening…','Escuchando…');updateVoiceControls();try{active.start();}catch{recognition=null;updateVoiceControls();voiceStatus.textContent=words('Microphone unavailable. Try keyboard dictation.','Micrófono no disponible. Usa el dictado del teclado.');}
+};
+read.onclick=()=>{readReplies=!readReplies;if(canSpeak&&!readReplies)synth.cancel();updateVoiceControls();};
+replay.onclick=()=>speakReply(lastReply);stop.onclick=()=>{if(canSpeak)synth.cancel();};
+window.addEventListener('pagehide',stopVoice);
+window.addEventListener('hashchange',()=>{if(location.hash&&location.hash!=='#home')stopVoice();});
+onLanguageChange(()=>{stopVoice();voiceStatus.textContent='';updateVoiceControls();});
+updateVoiceControls();
 $('chatForm').onsubmit=async event=>{
   event.preventDefault();if(busy || !aiEnabled || !signedIn)return;
+  stopVoice();
   const content=$('problem').value.trim();if(!content){status('chatStatus','Enter your question first.',true);return;}
   // Keep recent complete exchanges; server applies its own stricter independent limits.
   const history=messages.slice(-10).map(m=>({...m,content:m.content.slice(0,4000)}));while(history.length && history.reduce((n,m)=>n+m.content.length,content.length)>16000)history.splice(0,2);
   const pending=[...history,{role:'user',content}];busy=true;updateChat();status('chatStatus','Thinking…');
-  try{const result=await api('/api/chat',{messages:pending});message('user',content);message('assistant',result.answer);messages=[...pending,{role:'assistant',content:result.answer}];$('problem').value='';status('chatStatus','Answer ready.');}
+  try{const result=await api('/api/chat',{messages:pending});message('user',content);message('assistant',result.answer);messages=[...pending,{role:'assistant',content:result.answer}];$('problem').value='';status('chatStatus','Answer ready.');lastReply=result.answer;if(readReplies&&(!location.hash||location.hash==='#home'))speakReply(result.answer);}
   catch(error){status('chatStatus',error.name==='TimeoutError'?'The request timed out. Your question is still here; try again.':error.message,true);}
   finally{busy=false;updateChat();}
 };
-$('newChat').onclick=()=>{messages=[];$('chatLog').replaceChildren();$('problem').value='';status('chatStatus','New chat started.');$('problem').focus();};
+$('newChat').onclick=()=>{stopVoice();lastReply='';updateVoiceControls();messages=[];$('chatLog').replaceChildren();$('problem').value='';status('chatStatus','New chat started.');$('problem').focus();};
 $('pick').onchange=async event=>{
   const file=event.target.files?.[0];if(!file)return;
   if(!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size>5*1024*1024){status('chatStatus','Choose a JPEG, PNG, or WebP image under 5 MB.',true);event.target.value='';return;}
