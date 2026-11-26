@@ -43,3 +43,10 @@ h2{margin:0 0 6px;color:#dfc098}.sub{color:#aa967d;margin-bottom:12px}.grid{disp
   .language-choice{flex:1 1 130px}
   .nav button{font-size:clamp(9px,2.5vw,12px);padding:9px 1px}
 }
+
+/* Show the entire landscape montage above the chat panel on every screen size. */
+.hero:not([style*="background-image"]) {
+  min-height: 0;
+  background-size: 100% auto;
+  padding-top: 56.28%;
+}
