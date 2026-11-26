@@ -183,9 +183,14 @@ export async function createApp({env = process.env, fetchImpl = fetch, now = Dat
             const response=await fetchImpl(aiUrl,{
               method:'POST',redirect:'error',signal:AbortSignal.timeout(25000),
               headers:{Authorization:`Bearer ${aiKey}`,'Content-Type':'application/json'},
-              body:JSON.stringify({model:aiModel,messages:[{role:'system',content:systemPrompt},...clean],max_completion_tokens:800,store:false})
+              body:JSON.stringify({model:aiModel,messages:[{role:'system',content:systemPrompt},...clean],...(aiProvider==='groq' ? {max_completion_tokens:2048,...(/^openai\/gpt-oss-(20b|120b)$/.test(aiModel)?{reasoning_effort:'low',include_reasoning:false}:{})} : {max_completion_tokens:800,store:false})})
             });
-            if(!response.ok) throw fail(response.status===429?429:502, response.status===429?'AI provider is busy. Try again later.':'AI service could not answer. Try again later.');
+            if(!response.ok) {
+              // Log only the status and a validated provider error code, never prompt data or credentials.
+              let code='unknown';try{const e=await response.json();const c=e?.error?.code;if(typeof c==='string' && /^[a-z][a-z0-9_-]{0,63}$/i.test(c) && !/^gsk_/i.test(c))code=c;}catch{}
+              console.warn('AI provider rejection',aiProvider,response.status,code);
+              throw fail(response.status===429?429:502, response.status===429?'AI provider usage limit reached. Try again later.':response.status===401||response.status===403?'AI provider authorization failed. Please contact the app owner.':'AI provider could not answer. Please try again later.');
+            }
             const data=await response.json();const answer=data.choices?.[0]?.message?.content;
             if(typeof answer !== 'string' || !answer.trim() || answer.length>16000) throw fail(502,'AI returned an empty or invalid answer. Please try again.');
             return json(200,{answer});
